@@ -38,9 +38,8 @@ class RetVal(tuple):
 
 
 class MicrosoftSqlServerConnector(BaseConnector):
-
     def __init__(self):
-        super(MicrosoftSqlServerConnector, self).__init__()
+        super().__init__()
         self._state = None
         self._cursor = None
 
@@ -56,7 +55,6 @@ class MicrosoftSqlServerConnector(BaseConnector):
 
     # fix empty name values in description
     def _remediate_description_names(self, description):
-
         description = [list(row) for row in description]
         name = "__name_not_provided__"
         for i, row in enumerate(description):
@@ -84,7 +82,6 @@ class MicrosoftSqlServerConnector(BaseConnector):
         dataset = [list(row) for row in dataset]
         for row in dataset:
             for i, value in enumerate(row):
-
                 col_type = description[i][1]
 
                 # convert dates to iso8601
@@ -97,7 +94,7 @@ class MicrosoftSqlServerConnector(BaseConnector):
                         row[i] = str(date_from_byte)
                     except:
                         self.debug_print("Binary Data")
-                        row[i] = "0x{0}".format(binascii.hexlify(value).decode().upper())
+                        row[i] = f"0x{binascii.hexlify(value).decode().upper()}"
 
                 # catchall for oddball column types
                 elif self._default_to_string and not (isinstance(value, str) or isinstance(value, int) or isinstance(value, float)):
@@ -118,7 +115,6 @@ class MicrosoftSqlServerConnector(BaseConnector):
         return newdataset
 
     def _description_to_dict(self, description):
-
         description_labels = ["name", "type_code", "display_size", "internal_size", "precision", "scale", "null_ok"]
         ret = dict()
         for col in description:
@@ -139,7 +135,7 @@ class MicrosoftSqlServerConnector(BaseConnector):
 
         error_code = None
         error_message = MSSQLSERVER_ERROR_MESSAGE_UNAVAILABLE
-        self.error_print("Traceback: {}".format(traceback.format_stack()))
+        self.error_print(f"Traceback: {traceback.format_stack()}")
         try:
             if hasattr(e, "args"):
                 if len(e.args) > 1:
@@ -151,14 +147,13 @@ class MicrosoftSqlServerConnector(BaseConnector):
             self._dump_error_log(ex, "Error occurred while fetching exception information")
 
         if not error_code:
-            error_text = "Error Message: {}".format(error_message)
+            error_text = f"Error Message: {error_message}"
         else:
-            error_text = "Error Code: {}. Error Message: {}".format(error_code, error_message)
+            error_text = f"Error Code: {error_code}. Error Message: {error_message}"
 
         return error_text
 
     def _get_query_results(self, action_result):
-
         summary = {"num_datasets": 0}
 
         # dataset_results = {}
@@ -177,8 +172,8 @@ class MicrosoftSqlServerConnector(BaseConnector):
                 description = self._description_to_dict(description)
                 all_datasets += [{"dataset": dataset, "description": description}]
 
-                summary["dataset:{}:rows".format(num_dataset)] = len(dataset)
-                summary["dataset:{}:columns".format(num_dataset)] = len(dataset[0]) if len(dataset) > 0 else 0
+                summary[f"dataset:{num_dataset}:rows"] = len(dataset)
+                summary[f"dataset:{num_dataset}:columns"] = len(dataset[0]) if len(dataset) > 0 else 0
                 num_dataset += 1
                 summary["num_datasets"] = num_dataset
 
@@ -250,13 +245,13 @@ class MicrosoftSqlServerConnector(BaseConnector):
             return action_result.set_status(phantom.APP_ERROR, "Test Connectivity Failed", self._get_error_message_from_exception(ex))
 
         for row in self._cursor:
-            self.save_progress("{}".format(row[0]))
+            self.save_progress(f"{row[0]}")
 
         self.save_progress("Test Connectivity Passed")
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def _handle_list_columns(self, param):
-        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
         action_result = self.add_action_result(ActionResult(dict(param)))
         table_name = param["table_name"]
         dbname = param["database"]
@@ -294,7 +289,7 @@ class MicrosoftSqlServerConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully listed columns")
 
     def _handle_list_tables(self, param):
-        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
         action_result = self.add_action_result(ActionResult(dict(param)))
         dbname = param.get("database")
         table_schema = param.get("table_schema")
@@ -328,7 +323,7 @@ class MicrosoftSqlServerConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully listed tables")
 
     def _handle_run_query(self, param):
-        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
+        self.save_progress(f"In action handler for: {self.get_action_identifier()}")
         self._default_to_string = param.get("default_to_string", True)
         self._datetime_to_iso8601 = param.get("datetime_to_iso8601", False)
         self._add_datasets_as_rows = param.get("add_datasets_as_rows", False)
@@ -371,7 +366,6 @@ class MicrosoftSqlServerConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully ran query")
 
     def handle_action(self, param):
-
         ret_val = phantom.APP_SUCCESS
 
         # To make this app work in a targeted mode where you can specify the
@@ -379,7 +373,7 @@ class MicrosoftSqlServerConnector(BaseConnector):
         # from initialize to here.
         if phantom.is_fail(self._connect_sql(param)):
             action_result = self.add_action_result(ActionResult(dict(param)))
-            action_result.set_status(phantom.APP_ERROR, "Unable to connect to host: {0}".format(param["host"]))
+            action_result.set_status(phantom.APP_ERROR, "Unable to connect to host: {}".format(param["host"]))
             return phantom.APP_ERROR
 
         # Get the action that we are supposed to execute for this App Run
@@ -431,7 +425,7 @@ class MicrosoftSqlServerConnector(BaseConnector):
 
         # check for the connection to the host
         if self._cursor is None:
-            return self._initialize_error("Error connecting to host: {}".format(host))
+            return self._initialize_error(f"Error connecting to host: {host}")
 
         self.save_progress("Database connection established")
         return True
@@ -445,7 +439,6 @@ class MicrosoftSqlServerConnector(BaseConnector):
 
 
 if __name__ == "__main__":
-
     import argparse
     import sys
 
@@ -468,7 +461,6 @@ if __name__ == "__main__":
     verify = args.verify
 
     if username is not None and password is None:
-
         # User specified a username but not a password, so ask
         import getpass
 
