@@ -48,13 +48,10 @@ def display_query_results(provides, all_results, context):
 
 
 def reformat_data(data, description_headers, add_datasets_as_rows):
-
     ret = []
 
     if add_datasets_as_rows:
-
         for index, dataset in enumerate(data):
-
             newdataset = {}
             ret += [newdataset]
             newdataset["index"] = index
@@ -62,7 +59,6 @@ def reformat_data(data, description_headers, add_datasets_as_rows):
             newdataset["dataset"] = []
 
             for row in dataset["dataset"]:
-
                 newrow = []
                 newdataset["dataset"] += [newrow]
 
@@ -71,7 +67,6 @@ def reformat_data(data, description_headers, add_datasets_as_rows):
 
             newdataset["description"] = []
             for name in sorted(dataset["description"].keys()):
-
                 newrow = []
                 newdataset["description"] += [newrow]
                 newrow += [name]
@@ -83,12 +78,10 @@ def reformat_data(data, description_headers, add_datasets_as_rows):
             newdataset["dump"] = json.dumps(newdataset)
 
     else:
-
         index = 0
         headers = []
 
         for i, row in enumerate(data):
-
             newheaders = sorted(row.keys())
             if set(headers) != set(newheaders):
                 headers = newheaders
@@ -108,7 +101,6 @@ def reformat_data(data, description_headers, add_datasets_as_rows):
 
     newret = []
     for i, dataset in enumerate(ret):
-
         if "description" in dataset:
             newdataset = {}
             newret += [newdataset]
