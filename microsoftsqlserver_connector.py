@@ -337,9 +337,15 @@ class MicrosoftSqlServerConnector(BaseConnector):
             self.debug_print("Executing run query")
             if non_query:
                 self._connection._conn.execute_non_query("ROLLBACK TRAN")
-                self._connection._conn.execute_non_query(query, format_vars)
+                if format_vars:
+                    self._connection._conn.execute_non_query(query, format_vars)
+                else:
+                    self._connection._conn.execute_non_query(query)
             else:
-                self._cursor.execute(query, format_vars)
+                if format_vars:
+                    self._cursor.execute(query, format_vars)
+                else:
+                    self._cursor.execute(query)
         except Exception as ex:
             return action_result.set_status(phantom.APP_ERROR, "Error running query", self._get_error_message_from_exception(ex))
 
