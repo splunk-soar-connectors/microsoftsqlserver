@@ -1,1 +1,2 @@
 **Unreleased**
+* PAPP-36947: Resolved issue where pymssql incorrectly interpreted literal percent signs as placeholders by conditionally passing format_vars to execute methods only when parameters are provided
