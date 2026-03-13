@@ -412,6 +412,7 @@ class MicrosoftSqlServerConnector(BaseConnector):
         username = config["username"]
         password = config["password"]
         port = config.get("port", 1433)
+        encryption = config.get("encryption", "request")
         host = param.get("host", config["host"])
         database = param.get("database", config["database"])
         param["host"] = host
@@ -424,7 +425,7 @@ class MicrosoftSqlServerConnector(BaseConnector):
 
         self._cursor = None
         try:
-            self._connection = pymssql.connect(host, username, password, database, port=port)  # pylint: disable=no-member
+            self._connection = pymssql.connect(host, username, password, database, port=port, encryption=encryption)
             self._cursor = self._connection.cursor()
         except Exception as ex:
             return self._initialize_error("Error authenticating with database", self._get_error_message_from_exception(ex))
