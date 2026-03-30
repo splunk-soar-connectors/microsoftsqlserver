@@ -1,7 +1,7 @@
 # Microsoft SQL Server
 
 Publisher: Splunk <br>
-Connector Version: 2.3.7 <br>
+Connector Version: 2.3.7-beta <br>
 Product Vendor: Microsoft <br>
 Product Name: Microsoft SQL Server <br>
 Minimum Product Version: 6.3.0
@@ -38,6 +38,8 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 **username** | required | string | Username |
 **password** | required | password | Password |
 **port** | optional | numeric | Database Service Port |
+**encryption** | optional | string | TLS encryption mode for the database connection |
+**validate_server_certificate** | optional | boolean | Validate the SQL Server TLS certificate. Disable this when connecting to servers with self-signed or SHA-1 certificates. |
 
 ### Supported Actions
 
