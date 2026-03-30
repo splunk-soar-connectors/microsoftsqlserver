@@ -259,9 +259,9 @@ class MicrosoftSqlServerConnector(BaseConnector):
         # known bug in pymssql. As a workaround, we write a temporary FreeTDS config file with
         # the desired encryption setting and point the FREETDSCONF environment variable at it
         # before opening the connection. The temp file is cleaned up in finalize().
-        encryption = (encryption or "request").lower()
-        if encryption not in {"off", "request", "require"}:
-            encryption = "request"
+        encryption = (encryption or MSSQLSERVER_ENCRYPTION_DEFAULT).lower()
+        if encryption not in MSSQLSERVER_ENCRYPTION_VALID_VALUES:
+            encryption = MSSQLSERVER_ENCRYPTION_DEFAULT
 
         lines = [
             "[global]",
@@ -269,13 +269,13 @@ class MicrosoftSqlServerConnector(BaseConnector):
         ]
 
         temp_conf = tempfile.NamedTemporaryFile(mode="w", prefix="mssql_freetds_", suffix=".conf", delete=False)
+        self._freetds_conf_path = temp_conf.name
         try:
             temp_conf.write("\n".join(lines) + "\n")
             temp_conf.flush()
         finally:
             temp_conf.close()
 
-        self._freetds_conf_path = temp_conf.name
         os.environ["FREETDSCONF"] = self._freetds_conf_path
 
     def _handle_list_columns(self, param):
@@ -440,7 +440,7 @@ class MicrosoftSqlServerConnector(BaseConnector):
         username = config["username"]
         password = config["password"]
         port = config.get("port", 1433)
-        encryption = config.get("encryption", "request")
+        encryption = config.get("encryption", MSSQLSERVER_ENCRYPTION_DEFAULT)
         host = param.get("host", config["host"])
         database = param.get("database", config["database"])
         param["host"] = host
@@ -479,7 +479,7 @@ class MicrosoftSqlServerConnector(BaseConnector):
                 self.debug_print(f"Error deleting FreeTDS config file: {self._freetds_conf_path}")
             self._freetds_conf_path = None
 
-            os.environ.pop("FREETDSCONF", None)
+        os.environ.pop("FREETDSCONF", None)
 
         self.save_state(self._state)
         return phantom.APP_SUCCESS
