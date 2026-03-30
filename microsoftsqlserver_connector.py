@@ -45,7 +45,6 @@ class MicrosoftSqlServerConnector(BaseConnector):
         self._state = None
         self._cursor = None
         self._freetds_conf_path = None
-        self._previous_freetds_conf = None
 
     def _initialize_error(self, msg, exception=None):
         if self.get_action_identifier() == "test_connectivity":
@@ -277,7 +276,6 @@ class MicrosoftSqlServerConnector(BaseConnector):
             temp_conf.close()
 
         self._freetds_conf_path = temp_conf.name
-        self._previous_freetds_conf = os.environ.get("FREETDSCONF")
         os.environ["FREETDSCONF"] = self._freetds_conf_path
 
     def _handle_list_columns(self, param):
@@ -478,14 +476,10 @@ class MicrosoftSqlServerConnector(BaseConnector):
             try:
                 os.unlink(self._freetds_conf_path)
             except OSError:
-                pass
+                self.debug_print(f"Error deleting FreeTDS config file: {self._freetds_conf_path}")
             self._freetds_conf_path = None
 
-            if self._previous_freetds_conf is None:
-                os.environ.pop("FREETDSCONF", None)
-            else:
-                os.environ["FREETDSCONF"] = self._previous_freetds_conf
-            self._previous_freetds_conf = None
+            os.environ.pop("FREETDSCONF", None)
 
         self.save_state(self._state)
         return phantom.APP_SUCCESS
