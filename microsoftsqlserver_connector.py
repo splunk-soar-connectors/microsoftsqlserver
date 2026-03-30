@@ -458,7 +458,7 @@ class MicrosoftSqlServerConnector(BaseConnector):
             # `encryption` is passed via the FreeTDS config rather than as a pymssql.connect() argument
             # see _configure_freetds() for details.
             self._configure_freetds(encryption)
-            self._connection = pymssql.connect(host, username, password, database, port=port)
+            self._connection = pymssql.connect(host, username, password, database, port=port)  # pylint: disable=no-member
             self._cursor = self._connection.cursor()
         except Exception as ex:
             return self._initialize_error("Error authenticating with database", self._get_error_message_from_exception(ex))
