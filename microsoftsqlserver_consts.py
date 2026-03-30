@@ -17,3 +17,7 @@
 # responses
 MSSQLSERVER_ERROR_MESSAGE_UNAVAILABLE = "Error message unavailable. Please check the asset configuration and|or action parameters"
 DEFAULT_TIMEOUT = 30
+
+# encryption config
+MSSQLSERVER_ENCRYPTION_DEFAULT = "request"
+MSSQLSERVER_ENCRYPTION_VALID_VALUES = {"off", "request", "require"}

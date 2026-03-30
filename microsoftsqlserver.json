@@ -51,6 +51,17 @@
             "data_type": "numeric",
             "default": 1433,
             "order": 4
+        },
+        "encryption": {
+            "description": "TLS encryption mode for the database connection",
+            "data_type": "string",
+            "value_list": [
+                "off",
+                "request",
+                "require"
+            ],
+            "default": "request",
+            "order": 5
         }
     },
     "actions": [

@@ -38,6 +38,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 **username** | required | string | Username |
 **password** | required | password | Password |
 **port** | optional | numeric | Database Service Port |
+**encryption** | optional | string | TLS encryption mode for the database connection |
 
 ### Supported Actions
 

@@ -18,7 +18,9 @@ import binascii
 import csv
 import datetime
 import json
+import os
 import struct
+import tempfile
 import traceback
 
 import phantom.app as phantom
@@ -42,6 +44,7 @@ class MicrosoftSqlServerConnector(BaseConnector):
         super().__init__()
         self._state = None
         self._cursor = None
+        self._freetds_conf_path = None
 
     def _initialize_error(self, msg, exception=None):
         if self.get_action_identifier() == "test_connectivity":
@@ -250,6 +253,31 @@ class MicrosoftSqlServerConnector(BaseConnector):
         self.save_progress("Test Connectivity Passed")
         return action_result.set_status(phantom.APP_SUCCESS)
 
+    def _configure_freetds(self, encryption):
+        # Workaround for https://github.com/pymssql/pymssql/issues/924:
+        # The `encryption` parameter passed to pymssql.connect() is silently ignored due to a
+        # known bug in pymssql. As a workaround, we write a temporary FreeTDS config file with
+        # the desired encryption setting and point the FREETDSCONF environment variable at it
+        # before opening the connection. The temp file is cleaned up in finalize().
+        encryption = (encryption or MSSQLSERVER_ENCRYPTION_DEFAULT).lower()
+        if encryption not in MSSQLSERVER_ENCRYPTION_VALID_VALUES:
+            encryption = MSSQLSERVER_ENCRYPTION_DEFAULT
+
+        lines = [
+            "[global]",
+            f"encryption = {encryption}",
+        ]
+
+        temp_conf = tempfile.NamedTemporaryFile(mode="w", prefix="mssql_freetds_", suffix=".conf", delete=False)
+        self._freetds_conf_path = temp_conf.name
+        try:
+            temp_conf.write("\n".join(lines) + "\n")
+            temp_conf.flush()
+        finally:
+            temp_conf.close()
+
+        os.environ["FREETDSCONF"] = self._freetds_conf_path
+
     def _handle_list_columns(self, param):
         self.save_progress(f"In action handler for: {self.get_action_identifier()}")
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -412,6 +440,7 @@ class MicrosoftSqlServerConnector(BaseConnector):
         username = config["username"]
         password = config["password"]
         port = config.get("port", 1433)
+        encryption = config.get("encryption", MSSQLSERVER_ENCRYPTION_DEFAULT)
         host = param.get("host", config["host"])
         database = param.get("database", config["database"])
         param["host"] = host
@@ -424,6 +453,9 @@ class MicrosoftSqlServerConnector(BaseConnector):
 
         self._cursor = None
         try:
+            # `encryption` is passed via the FreeTDS config rather than as a pymssql.connect() argument
+            # see _configure_freetds() for details.
+            self._configure_freetds(encryption)
             self._connection = pymssql.connect(host, username, password, database, port=port)  # pylint: disable=no-member
             self._cursor = self._connection.cursor()
         except Exception as ex:
@@ -440,6 +472,15 @@ class MicrosoftSqlServerConnector(BaseConnector):
         return phantom.APP_SUCCESS
 
     def finalize(self):
+        if self._freetds_conf_path:
+            try:
+                os.unlink(self._freetds_conf_path)
+            except OSError:
+                self.debug_print(f"Error deleting FreeTDS config file: {self._freetds_conf_path}")
+            self._freetds_conf_path = None
+
+        os.environ.pop("FREETDSCONF", None)
+
         self.save_state(self._state)
         return phantom.APP_SUCCESS
 
