@@ -7,6 +7,17 @@ Below are the default ports used by Microsoft-SQL-Server.
 |          **Microsoft-SQL-Server (ms-sql-s)** | 1433 | tcp |
 |          **Microsoft-SQL-Server (ms-sql-s)** | 1433 | udp |
 
+## TLS certificate verification
+
+The connector requires TLS and verifies the SQL Server certificate and configured hostname by
+default. Set **CA file** to a PEM bundle when the server uses a private certificate authority. The
+default value, `system`, uses the operating system trust store.
+
+Disabling **Verify server certificate** is an explicit compatibility opt-out. It keeps the database
+traffic encrypted when **Encryption** is `require`, but it does not authenticate the remote server
+and can expose credentials and data to a man-in-the-middle attacker. Setting **Encryption** to `off`
+also disables transport encryption.
+
 ## LGPL
 
 This app uses the pymssql module, which is licensed under the Free Software Foundation (FSF).
