@@ -253,7 +253,7 @@ class MicrosoftSqlServerConnector(BaseConnector):
         self.save_progress("Test Connectivity Passed")
         return action_result.set_status(phantom.APP_SUCCESS)
 
-    def _configure_freetds(self, encryption):
+    def _configure_freetds(self, encryption, verify_server_cert, ca_file):
         # Workaround for https://github.com/pymssql/pymssql/issues/924:
         # The `encryption` parameter passed to pymssql.connect() is silently ignored due to a
         # known bug in pymssql. As a workaround, we write a temporary FreeTDS config file with
@@ -267,6 +267,18 @@ class MicrosoftSqlServerConnector(BaseConnector):
             "[global]",
             f"encryption = {encryption}",
         ]
+        if verify_server_cert:
+            ca_file = (ca_file or MSSQLSERVER_CA_FILE_DEFAULT).strip()
+            if not ca_file or any(character in ca_file for character in "\r\n\x00"):
+                raise ValueError("Invalid CA file path")
+            lines.extend(
+                [
+                    f"ca file = {ca_file}",
+                    "check certificate hostname = yes",
+                ]
+            )
+        else:
+            self.debug_print("WARNING: TLS server certificate verification is disabled for this asset.")
 
         temp_conf = tempfile.NamedTemporaryFile(mode="w", prefix="mssql_freetds_", suffix=".conf", delete=False)
         self._freetds_conf_path = temp_conf.name
@@ -441,6 +453,8 @@ class MicrosoftSqlServerConnector(BaseConnector):
         password = config["password"]
         port = config.get("port", 1433)
         encryption = config.get("encryption", MSSQLSERVER_ENCRYPTION_DEFAULT)
+        verify_server_cert = config.get("verify_server_cert", MSSQLSERVER_VERIFY_SERVER_CERT_DEFAULT)
+        ca_file = config.get("ca_file", MSSQLSERVER_CA_FILE_DEFAULT)
         host = param.get("host", config["host"])
         database = param.get("database", config["database"])
         param["host"] = host
@@ -455,7 +469,7 @@ class MicrosoftSqlServerConnector(BaseConnector):
         try:
             # `encryption` is passed via the FreeTDS config rather than as a pymssql.connect() argument
             # see _configure_freetds() for details.
-            self._configure_freetds(encryption)
+            self._configure_freetds(encryption, verify_server_cert, ca_file)
             self._connection = pymssql.connect(host, username, password, database, port=port)  # pylint: disable=no-member
             self._cursor = self._connection.cursor()
         except Exception as ex:

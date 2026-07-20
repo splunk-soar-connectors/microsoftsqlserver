@@ -53,15 +53,28 @@
             "order": 4
         },
         "encryption": {
-            "description": "TLS encryption mode for the database connection",
+            "description": "TLS negotiation mode. This controls encryption availability, not peer authentication.",
             "data_type": "string",
             "value_list": [
                 "off",
                 "request",
                 "require"
             ],
-            "default": "request",
+            "default": "require",
             "order": 5
+        },
+        "verify_server_cert": {
+            "description": "Verify the database server certificate and configured hostname",
+            "data_type": "boolean",
+            "default": true,
+            "order": 6
+        },
+        "ca_file": {
+            "description": "Optional CA bundle path for privately signed database certificates. Uses the system trust store by default.",
+            "data_type": "string",
+            "default": "system",
+            "required": false,
+            "order": 7
         }
     },
     "actions": [
