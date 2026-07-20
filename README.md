@@ -1,7 +1,7 @@
 # Microsoft SQL Server
 
 Publisher: Splunk <br>
-Connector Version: 2.3.8 <br>
+Connector Version: 2.3.9 <br>
 Product Vendor: Microsoft <br>
 Product Name: Microsoft SQL Server <br>
 Minimum Product Version: 6.3.0
