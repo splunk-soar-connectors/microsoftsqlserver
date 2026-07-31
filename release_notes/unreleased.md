@@ -1,1 +1,3 @@
 **Unreleased**
+
+* Required TLS and enabled SQL Server certificate and hostname verification by default, with custom CA and explicit opt-out support.
